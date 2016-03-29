@@ -15,5 +15,13 @@ namespace Logic
             else
                 return BitConverter.ToUInt16(bytes, 0);
         }
+
+        public static byte[] ShortToBytes(short number)
+        {
+            if (BitConverter.IsLittleEndian)
+                return BitConverter.GetBytes(number).Reverse().ToArray();
+            else
+                return BitConverter.GetBytes(number);
+        }
     }
 }

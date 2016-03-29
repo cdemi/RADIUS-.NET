@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -22,7 +23,7 @@ namespace Tester
                     var rawRadiusRequest = udpSocket.Receive(ref anySender);
                     var radiusRequest = new RadiusPacket(rawRadiusRequest);
 
-                    RadiusPacket radiusResponse = new RadiusPacket(RadiusCode.ACCESS_ACCEPT, radiusRequest.Identifier);
+                    RadiusPacket radiusResponse = new RadiusPacket(RadiusCode.ACCESS_ACCEPT, radiusRequest.Identifier, new List<RadiusAttribute>());
 
                     udpSocket.Send(radiusResponse.ToRawData(), radiusResponse.ToRawData().Length, anySender);
                     Console.WriteLine(JsonConvert.SerializeObject(radiusRequest, Formatting.Indented, new JsonConverter[] { new StringEnumConverter() }));

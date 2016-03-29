@@ -25,10 +25,11 @@ namespace Models
             parseRadiusAttributes(rawData);
         }
 
-        public RadiusPacket(RadiusCode code, byte identifier)
+        public RadiusPacket(RadiusCode code, byte identifier, List<RadiusAttribute> attributes)
         {
             Code = code;
             Identifier = identifier;
+            Attributes = attributes;
         }
 
         public byte[] ToRawData()

@@ -1,5 +1,6 @@
 ﻿using Logic;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Text;
 
@@ -18,6 +19,23 @@ namespace Models
             Value = getValueFromRawData(rawData);
         }
 
+        public byte[] ToRawData()
+        {
+            List<byte> rawData = new List<byte>();
+
+            rawData.Add((byte)Type);
+
+            switch (Type)
+            {
+                default:
+                    rawData.AddRange(Encoding.ASCII.GetBytes(Value));
+                    break;
+            }
+
+            //rawData.Insert(1, ((short)rawData.Count + 1));
+
+            return rawData.ToArray();
+        }
         private string getValueFromRawData(byte[] rawData)
         {
             byte[] rawValue = new byte[Length - 2];
