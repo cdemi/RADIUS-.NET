@@ -6,50 +6,42 @@ namespace Models
 {
     public class RadiusPacket
     {
-        private byte[] rawData;
+        public readonly RadiusCode Code;
+        public readonly byte Identifier;
+        public readonly ushort Length;
+        public readonly byte[] Authenticator;
+        public readonly List<RadiusAttribute> Attributes = new List<RadiusAttribute>();
 
-
-        public RadiusCode Code
-        {
-            get
-            {
-                return (RadiusCode)rawData[0];
-            }
-        }
-
-        public byte Identifier
-        {
-            get
-            {
-                return rawData[1];
-            }
-        }
-
-        public ushort Length
-        {
-            get
-            {
-                return Helpers.BytesToUShort(rawData[2], rawData[3]);
-            }
-        }
-
-        public byte[] Authenticator
-        {
-            get
-            {
-                byte[] authenticator = new byte[16];
-                Buffer.BlockCopy(rawData, 4, authenticator, 0, 16);
-                return authenticator;
-            }
-        }
-        public List<RadiusAttribute> Attributes = new List<RadiusAttribute>();
         public RadiusPacket(byte[] rawData)
         {
-            this.rawData = rawData;
-            parseRadiusAttributes();
+            this.Code = (RadiusCode)rawData[0];
+            Identifier = rawData[1];
+            Length = Helpers.BytesToUShort(rawData[2], rawData[3]);
+
+            byte[] authenticator = new byte[16];
+            Buffer.BlockCopy(rawData, 4, authenticator, 0, 16);
+            Authenticator = authenticator;
+
+            parseRadiusAttributes(rawData);
         }
 
-        private void parseRadiusAttributes()
+        public RadiusPacket(RadiusCode code, byte identifier)
+        {
+            Code = code;
+            Identifier = identifier;
+        }
+
+        public byte[] ToRawData()
+        {
+            List<byte> rawData = new List<byte>();
+
+            rawData.Add((byte)Code);
+            rawData.Add(Identifier);
+
+            return rawData.ToArray();
+        }
+
+        private void parseRadiusAttributes(byte[] rawData)
         {
             int i = 20;
             while (i < rawData.Length)
