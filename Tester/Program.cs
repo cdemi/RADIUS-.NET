@@ -1,5 +1,6 @@
 ﻿using Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -19,7 +20,7 @@ namespace Tester
                 {
                     var rawRadiusPacket = udpSocket.Receive(ref anySender);
                     var radiusPacket = new RadiusPacket(rawRadiusPacket);
-                    Console.WriteLine(JsonConvert.SerializeObject(radiusPacket));
+                    Console.WriteLine(JsonConvert.SerializeObject(radiusPacket, Formatting.Indented, new JsonConverter[] { new StringEnumConverter() }));
                     Console.WriteLine();
                 }
             }
