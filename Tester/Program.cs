@@ -1,11 +1,7 @@
 ﻿using Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 
 namespace Tester
 {
@@ -20,14 +16,19 @@ namespace Tester
                 while (true)
                 {
                     IPEndPoint anySender = new IPEndPoint(IPAddress.Any, 0);
+
                     var rawRadiusRequest = udpSocket.Receive(ref anySender);
                     var radiusRequest = new RadiusPacket(rawRadiusRequest);
 
-                    RadiusPacket radiusResponse = new RadiusPacket(RadiusCode.ACCESS_ACCEPT, radiusRequest.Identifier, new List<RadiusAttribute>());
+                    RadiusPacket radiusResponse = new RadiusPacket(RadiusCode.ACCESS_ACCEPT, radiusRequest.Identifier, new List<RadiusAttribute>()
+                    {
+                        new RadiusAttribute(RadiusAttributeType.SERVICE_TYPE, new byte[] { 1  }),
+                        new RadiusAttribute(RadiusAttributeType.LOGIN_SERVICE, new byte[] { 0  }),
+                        new RadiusAttribute(RadiusAttributeType.LOGIN_IP_HOST, IPAddress.Parse("192.168.1.3"))
+                    }, radiusRequest.RequestAuthenticator, "xyzzy5461");
+                    var rawRadiusResponse = radiusResponse.ToRawData();
 
-                    udpSocket.Send(radiusResponse.ToRawData(), radiusResponse.ToRawData().Length, anySender);
-                    Console.WriteLine(JsonConvert.SerializeObject(radiusRequest, Formatting.Indented, new JsonConverter[] { new StringEnumConverter() }));
-                    Console.WriteLine();
+                    udpSocket.Send(rawRadiusResponse, rawRadiusResponse.Length, anySender);
                 }
             }
         }

@@ -1,6 +1,7 @@
 ﻿using Logic;
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace Models
 {
@@ -9,7 +10,8 @@ namespace Models
         public readonly RadiusCode Code;
         public readonly byte Identifier;
         public readonly ushort Length;
-        public readonly byte[] Authenticator;
+        public readonly string SharedSecret;
+        public readonly byte[] RequestAuthenticator;
         public readonly List<RadiusAttribute> Attributes = new List<RadiusAttribute>();
 
         public RadiusPacket(byte[] rawData)
@@ -20,16 +22,18 @@ namespace Models
 
             byte[] authenticator = new byte[16];
             Buffer.BlockCopy(rawData, 4, authenticator, 0, 16);
-            Authenticator = authenticator;
+            RequestAuthenticator = authenticator;
 
             parseRadiusAttributes(rawData);
         }
 
-        public RadiusPacket(RadiusCode code, byte identifier, List<RadiusAttribute> attributes)
+        public RadiusPacket(RadiusCode code, byte identifier, List<RadiusAttribute> attributes, byte[] requestAuthenticator, string sharedSecret)
         {
             Code = code;
             Identifier = identifier;
             Attributes = attributes;
+            RequestAuthenticator = requestAuthenticator;
+            SharedSecret = sharedSecret;
         }
 
         public byte[] ToRawData()
@@ -38,9 +42,35 @@ namespace Models
 
             rawData.Add((byte)Code);
             rawData.Add(Identifier);
+            foreach (var attribute in Attributes)
+            {
+                rawData.AddRange(attribute.ToRawData());
+            }
+            rawData.InsertRange(2, Helpers.ShortToBytes((short)(rawData.Count + 2)));
+            rawData.InsertRange(4, buildResponseAuthenticator());
 
             return rawData.ToArray();
         }
+
+        private byte[] buildResponseAuthenticator()
+        {
+            List<byte> rawData = new List<byte>();
+
+            rawData.Add((byte)Code);
+            rawData.Add(Identifier);
+            rawData.AddRange(RequestAuthenticator);
+            foreach (var attribute in Attributes)
+            {
+                rawData.AddRange(attribute.ToRawData());
+            }
+            rawData.InsertRange(2, Helpers.ShortToBytes((short)(rawData.Count + 2)));
+            rawData.AddRange(System.Text.Encoding.ASCII.GetBytes(SharedSecret));
+
+            MD5 md5 = new MD5CryptoServiceProvider();
+            md5.ComputeHash(rawData.ToArray());
+            return md5.Hash;
+        }
+
 
         private void parseRadiusAttributes(byte[] rawData)
         {
