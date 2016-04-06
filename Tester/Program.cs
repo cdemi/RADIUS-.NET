@@ -1,7 +1,12 @@
 ﻿using Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace Tester
 {
@@ -11,7 +16,7 @@ namespace Tester
         static void Main(string[] args)
         {
 
-            using (UdpClient udpSocket = new UdpClient(6969))
+            using (UdpClient udpSocket = new UdpClient(1812))
             {
                 while (true)
                 {
@@ -20,15 +25,12 @@ namespace Tester
                     var rawRadiusRequest = udpSocket.Receive(ref anySender);
                     var radiusRequest = new RadiusPacket(rawRadiusRequest);
 
-                    RadiusPacket radiusResponse = new RadiusPacket(RadiusCode.ACCESS_ACCEPT, radiusRequest.Identifier, new List<RadiusAttribute>()
-                    {
-                        new RadiusAttribute(RadiusAttributeType.SERVICE_TYPE, new byte[] { 1  }),
-                        new RadiusAttribute(RadiusAttributeType.LOGIN_SERVICE, new byte[] { 0  }),
-                        new RadiusAttribute(RadiusAttributeType.LOGIN_IP_HOST, IPAddress.Parse("192.168.1.3"))
-                    }, radiusRequest.RequestAuthenticator, "xyzzy5461");
-                    var rawRadiusResponse = radiusResponse.ToRawData();
+                    Console.WriteLine($"{radiusRequest.Attributes.SingleOrDefault(a=>a.Type==RadiusAttributeType.USER_NAME).ReadableValue } requested access");
 
+                    RadiusPacket radiusResponse = new RadiusPacket(RadiusCode.ACCESS_ACCEPT, radiusRequest.Identifier, radiusRequest.Attributes, radiusRequest.RequestAuthenticator, "123");
+                    var rawRadiusResponse = radiusResponse.ToRawData();
                     udpSocket.Send(rawRadiusResponse, rawRadiusResponse.Length, anySender);
+
                 }
             }
         }

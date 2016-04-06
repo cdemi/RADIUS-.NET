@@ -1,6 +1,7 @@
 ﻿using Logic;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 
 namespace Models
@@ -46,24 +47,26 @@ namespace Models
             {
                 rawData.AddRange(attribute.ToRawData());
             }
-            rawData.InsertRange(2, Helpers.ShortToBytes((short)(rawData.Count + 2)));
-            rawData.InsertRange(4, buildResponseAuthenticator());
+
+            var length = Helpers.ShortToBytes((short)(rawData.Count+2+16));
+            rawData.InsertRange(2, length);
+            rawData.InsertRange(4, buildResponseAuthenticator(length));
 
             return rawData.ToArray();
         }
 
-        private byte[] buildResponseAuthenticator()
+        private byte[] buildResponseAuthenticator(byte[] length)
         {
             List<byte> rawData = new List<byte>();
 
             rawData.Add((byte)Code);
             rawData.Add(Identifier);
+            rawData.AddRange(length);
             rawData.AddRange(RequestAuthenticator);
             foreach (var attribute in Attributes)
             {
                 rawData.AddRange(attribute.ToRawData());
             }
-            rawData.InsertRange(2, Helpers.ShortToBytes((short)(rawData.Count + 2)));
             rawData.AddRange(System.Text.Encoding.ASCII.GetBytes(SharedSecret));
 
             MD5 md5 = new MD5CryptoServiceProvider();
